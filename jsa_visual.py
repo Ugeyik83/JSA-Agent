@@ -25,7 +25,7 @@ from jsa_core import HAZARD_CATEGORIES, get_all_hazards_flat, get_controls, CONT
 
 def init_gemini(api_key: str):
     genai.configure(api_key=api_key)
-    return genai.GenerativeModel("gemini-1.5-flash")
+    return genai.GenerativeModel("gemini-2.0-flash")
 
 
 def image_to_base64_part(image: Image.Image) -> dict:
