@@ -1,4 +1,4 @@
-# jsa_visual.py — Gemini Vision Tehlike Tespiti + ReportLab PDF Raporu
+# jsa_visual.py — OpenAI GPT-4o Vision Tehlike Tespiti + ReportLab PDF Raporu
 
 import os
 import json
@@ -7,7 +7,7 @@ import io
 from datetime import datetime
 from pathlib import Path
 
-import google.generativeai as genai
+from openai import OpenAI
 from PIL import Image
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -21,33 +21,29 @@ from reportlab.platypus import (
 
 from jsa_core import HAZARD_CATEGORIES, get_all_hazards_flat, get_controls, CONTROL_LABELS
 
-# ── Gemini Konfigürasyonu ──────────────────────────────────────────────────────
+# ── OpenAI Konfigürasyonu ──────────────────────────────────────────────────────
 
 def init_gemini(api_key: str):
-    genai.configure(api_key=api_key)
-    return genai.GenerativeModel("gemini-2.0-flash")
+    """OpenAI client döndür — fonksiyon adı geriye dönük uyumluluk için korundu."""
+    return OpenAI(api_key=api_key)
 
 
-def image_to_base64_part(image: Image.Image) -> dict:
-    """PIL Image → Gemini'nin kabul ettiği inline_data formatı."""
+def image_to_base64_str(image: Image.Image) -> str:
+    """PIL Image → base64 string (OpenAI vision formatı)."""
     buf = io.BytesIO()
     image.save(buf, format="JPEG", quality=85)
     buf.seek(0)
-    return {
-        "inline_data": {
-            "mime_type": "image/jpeg",
-            "data": base64.b64encode(buf.read()).decode("utf-8"),
-        }
-    }
+    return base64.b64encode(buf.read()).decode("utf-8")
 
 
-def detect_hazards_gemini(model, image: Image.Image) -> list:
+def detect_hazards_gemini(client, image: Image.Image) -> dict:
     """
-    Gemini'ye görseli gönder, tehlike listesi al.
-    Çıktı: [{"id", "description", "category", "location",
-              "affected_body_part", "suggested_severity", "confidence"}, ...]
+    OpenAI GPT-4o Vision ile tehlike tespiti.
+    Fonksiyon adı geriye dönük uyumluluk için korundu.
+    Çıktı: {"hazards": [...], "general_observations": str, "missing_ppe": [...]}
     """
     hazard_list_str = "\n".join(f"- {h}" for h in get_all_hazards_flat())
+    b64_image = image_to_base64_str(image)
 
     prompt = f"""
 Sen deneyimli bir İş Sağlığı ve Güvenliği uzmanısın.
@@ -79,21 +75,35 @@ Güven skoru (confidence) 0.0–1.0 arası olmalı.
 Eğer görüntü net değilse veya tehlike tespit edemiyorsan boş liste döndür.
 """
 
-    image_part = image_to_base64_part(image)
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{b64_image}",
+                            "detail": "high"
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": prompt
+                    }
+                ]
+            }
+        ],
+        max_tokens=2000,
+    )
 
-    response = model.generate_content([
-        {"role": "user", "parts": [image_part, {"text": prompt}]}
-    ])
-
-    raw = response.text.strip()
-    # LLM bazen ```json fence ekler — temizle
+    raw = response.choices[0].message.content.strip()
     raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
 
     try:
-        data = json.loads(raw)
-        return data
+        return json.loads(raw)
     except json.JSONDecodeError:
-        # Parse hatası → boş sonuç döndür, uygulama çökmez
         return {
             "hazards": [],
             "general_observations": "Görüntü analiz edilemedi.",

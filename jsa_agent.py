@@ -61,10 +61,10 @@ with st.sidebar:
     # API Key
     st.subheader("🔑 API Ayarları")
     api_key = st.text_input(
-        "Google Gemini API Key",
+        "OpenAI API Key",
         type="password",
-        placeholder="AIza...",
-        help="https://aistudio.google.com/app/apikey adresinden ücretsiz alın"
+        placeholder="sk-...",
+        help="https://platform.openai.com/api-keys adresinden alın"
     )
     st.divider()
 
