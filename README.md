@@ -3,7 +3,7 @@
 > **AI destekli İş Güvenliği Analizi (JSA) ve Fine-Kinney risk puanlaması.**  
 > Fotoğraf yükle → AI tehlikeleri tespit etsin → Kontrol önermelerini gör → PDF + JSON al.
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://your-app-url.streamlit.app)
+[![Streamlit App]]([[https://your-app-url.streamlit.app](https://jsa-agent.streamlit.app/)](https://jsa-agent.streamlit.app/))
 [![Python](https://img.shields.io/badge/Python-3.11-blue)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
