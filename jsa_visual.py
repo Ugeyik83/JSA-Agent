@@ -74,7 +74,7 @@ SADECE aşağıdaki JSON formatında yanıt ver, başka hiçbir metin ekleme:
       "category": "Kategori adı",
       "location": "Görselde nerede görüldüğü (sol/sağ/ön plan vb.)",
       "affected_body_part": "Etkilenebilecek vücut bölgesi",
-      "suggested_severity": "Severity seçeneklerinden biri",
+      "suggested_severity": "Aşağıdaki seçeneklerden biri (birebir kopyala): Birden fazla ölümlü kaza/Çevresel felaket (100) | Öldürücü kaza/Tam Maluliyet/Ciddi çevresel zarar (40) | Sakatlık/Uzuv Kaybı/Çevresel engel oluşturma/Meslek Hastalığı (15) | Önemli hasar, yaralanma, dış ilkyardım ihtiyacı/arazi sınırları dışında çevresel zarar (7) | Küçük hasar/yaralanma, dahili ilk yardım/arazi sınırları içinde çevresel zarar (3) | Ucuz atlatma, ramak kaldı/Çevresel zarar yok (1)",
       "confidence": 0.80
     }}
   ],
@@ -211,11 +211,11 @@ RISK_COLOR_MAP = {
 def _styles():
     custom = {
         "title": ParagraphStyle(
-            "title", fontName=FONT_BOLD, fontSize=22,
+            "title", fontName=FONT_BOLD, fontSize=24,
             textColor=DARK_BLUE, alignment=TA_CENTER, spaceAfter=12
         ),
         "subtitle": ParagraphStyle(
-            "subtitle", fontName=FONT_NORMAL, fontSize=10,
+            "subtitle", fontName=FONT_NORMAL, fontSize=12,
             textColor=MID_BLUE, alignment=TA_CENTER, spaceAfter=2
         ),
         "section": ParagraphStyle(

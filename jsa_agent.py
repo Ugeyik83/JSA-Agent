@@ -53,8 +53,7 @@ if "uploaded_image" not in st.session_state:
 
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.image("https://img.icons8.com/color/96/safety-helmet.png", width=64)
-    st.title("JSA Agent")
+    st.markdown("## 🦺 JSA Agent")
     st.caption("Fine-Kinney Risk Değerlendirme")
     st.divider()
 
@@ -170,9 +169,20 @@ if st.session_state.gemini_result:
                 with col_pfk:
                     st.markdown("**Fine-Kinney Parametreleri**")
 
-                    # Gemini önerdiği şiddeti varsayılan yap
-                    suggested_e = h.get("suggested_severity", e_keys[2])
-                    default_e_idx = e_keys.index(suggested_e) if suggested_e in e_keys else 2
+                    # AI önerisini SEVERITY sözlüğüyle eşleştir (keyword match)
+                    suggested_e = h.get("suggested_severity", "")
+                    default_e_idx = 2  # varsayılan: Sakatlık/15
+                    if suggested_e:
+                        s_lower = suggested_e.lower()
+                        for idx, key in enumerate(e_keys):
+                            k_lower = key.lower()
+                            # Tam eşleşme veya anahtar kelimenin içinde geçmesi
+                            if s_lower in k_lower or any(
+                                word in k_lower for word in s_lower.split()
+                                if len(word) > 4
+                            ):
+                                default_e_idx = idx
+                                break
 
                     p_sel = st.selectbox(
                         f"P — Olasılık #{h['id']}",
