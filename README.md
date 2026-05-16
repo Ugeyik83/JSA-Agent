@@ -3,21 +3,11 @@
 > **AI destekli İş Güvenliği Analizi (JSA) ve Fine-Kinney risk puanlaması.**  
 > Fotoğraf yükle → AI tehlikeleri tespit etsin → Kontrol önermelerini gör → PDF + JSON al.
 
-[![Streamlit App]]([[https://your-app-url.streamlit.app](https://jsa-agent.streamlit.app/)](https://jsa-agent.streamlit.app/))
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://jsa-agent.streamlit.app)
 [![Python](https://img.shields.io/badge/Python-3.11-blue)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
----
-
-## 📸 Ekran Görüntüleri
-
-> *(Deploy sonrası ekran görüntülerini buraya ekle)*
-
-| Adım | Ekran |
-|---|---|
-| Fotoğraf yükleme + AI analiz | `screenshots/01_upload.png` |
-| Fine-Kinney P/F/E değerlendirme | `screenshots/02_assessment.png` |
-| Risk özeti + JSON/PDF export | `screenshots/03_report.png` |
+🔗 **Demo:** [jsa-agent.streamlit.app](https://jsa-agent.streamlit.app)
 
 ---
 
@@ -25,8 +15,8 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     KULLANICI (Tarayıcı)                     │
-│                    Streamlit Arayüzü                         │
+│                     KULLANICI (Tarayıcı)                    │
+│                    Streamlit Arayüzü                        │
 │              jsa_agent.py — 3 Adımlı UI                     │
 └──────────┬──────────────────────────┬───────────────────────┘
            │                          │
@@ -35,11 +25,11 @@
 │   VISION KATMANI    │   │        KURAL MOTORU              │
 │   jsa_visual.py     │   │        jsa_core.py               │
 │                     │   │                                  │
-│  Gemini 1.5 Flash   │   │  Fine-Kinney: R = P × F × E     │
-│  Vision API         │   │  Tehlike Kategorileri            │
-│  → Tehlike Listesi  │   │  Risk Eşik Tablosu               │
-│  → AI Güven Skoru   │   │  Kontrol Hiyerarşisi             │
-│  → E Önerisi        │   │  (ISO 45001 / NIOSH)             │
+│  GPT-4o Vision API  │   │  Fine-Kinney: R = P × F × E      │
+│  → Tehlike Listesi  │   │  Tehlike Kategorileri            │
+│  → AI Güven Skoru   │   │  Risk Eşik Tablosu               │
+│  → E Önerisi        │   │  Kontrol Hiyerarşisi             │
+│  → Eksik KKD        │   │  (ISO 45001 / NIOSH)             │
 └─────────┬───────────┘   └──────────────┬───────────────────┘
           │                              │
           └──────────────┬───────────────┘
@@ -47,8 +37,8 @@
                          ▼
            ┌─────────────────────────┐
            │      ÇIKTI KATMANI      │
-           │  📄 PDF Raporu           │
-           │  📦 JSON Export          │
+           │  📄 PDF Raporu          │
+           │  📦 JSON Export         │
            └─────────────────────────┘
 ```
 
@@ -58,9 +48,9 @@
 [Foto Yükleme]
       │
       ▼
-[Gemini Vision API]
+[GPT-4o Vision API]
   ├── Tehlike Listesi (kategori + açıklama)
-  ├── AI Güven Skoru (0.0–1.0)
+  ├── AI Güven Skoru 🟢🟡🔴
   ├── Şiddet Önerisi (E parametresi)
   └── Eksik KKD Listesi
       │
@@ -86,14 +76,13 @@
 
 | Özellik | Açıklama |
 |---|---|
-| **AI Tehlike Tespiti** | Gemini 1.5 Flash ile fotoğraftan otomatik tehlike tanımlama |
+| **AI Tehlike Tespiti** | GPT-4o Vision ile fotoğraftan otomatik tehlike tanımlama |
 | **Güven Skoru** | 🟢 Yüksek / 🟡 Orta / 🔴 Düşük — sahada doğrulama yönlendirmesi |
 | **Fine-Kinney Skorlama** | R = P × F × E standart risk hesabı, 5 seviye sınıflandırma |
 | **Hibrit Değerlendirme** | AI şiddet (E) önerir, kullanıcı P ve F operasyonel verilerini girer |
 | **Kontrol Önerileri** | ISO 45001 hiyerarşisi: Eliminasyon → İkame → Mühendislik → İdari → KKD |
 | **PDF Raporu** | Fotoğraf + AI tespiti + FK tablosu + kontrol önerileri + risk özeti |
 | **JSON Export** | Standart şema v1.0 — audit trail ve sistem entegrasyonu için |
-| **Ücretsiz API** | Gemini 1.5 Flash — günlük 1.500 istek ücretsiz |
 
 ---
 
@@ -111,34 +100,34 @@ R = P × F × E
 
 | Değer | Açıklama |
 |---|---|
-| 1.0 | Çok muhtemel — Hemen hemen kesin gerçekleşir |
-| 0.5 | Muhtemel — Beklenebilir |
-| 0.2 | Az olası — Alışılmadık ama mümkün |
-| 0.1 | Nadiren olası — Çok az ihtimalle |
-| 0.05 | Hayal edilebilir — Teorik olarak mümkün |
-| 0.01 | Pratik imkânsız — Ancak mantıken mümkün |
+| 10.0 | Çok muhtemel — Hemen hemen kesin gerçekleşir |
+| 6.0 | Muhtemel — Beklenebilir |
+| 3.0 | Olası — Alışılmadık ama mümkün |
+| 1.0 | Mümkün fakat düşük |
+| 0.5 | Beklenmez fakat mümkün |
+| 0.2 | Beklenmez |
 
 **F — Frekans / Maruziyet (Frequency)**
 
 | Değer | Açıklama |
 |---|---|
-| 10 | Sürekli — Günde çok kez |
-| 6 | Sık sık — Günde birkaç kez |
-| 3 | Günde bir kez |
-| 2 | Haftada bir |
-| 1 | Ayda bir |
-| 0.5 | Yılda bir |
+| 10 | Hemen hemen sürekli — Bir saate birkaç defa |
+| 6 | Sık — Günde bir veya birkaç defa |
+| 3 | Ara sıra — Haftada bir veya birkaç defa |
+| 2 | Sık değil — Ayda bir veya birkaç defa |
+| 1 | Seyrek — Yılda birkaç defa |
+| 0.5 | Çok seyrek — Yılda bir defa veya daha az |
 
 **E — Şiddet / Etki (Effect/Severity)**
 
 | Değer | Açıklama |
 |---|---|
-| 100 | Felaket — Çok sayıda ölüm |
-| 40 | Çok ciddi — Birkaç ölüm |
-| 15 | Ciddi — Bir ölüm |
-| 7 | Önemli — Ağır yaralanma, kalıcı hasar |
-| 3 | Hafif — İlk yardım gerektiren yaralanma |
-| 1 | İhmal edilebilir — Küçük kesik, morluk |
+| 100 | Birden fazla ölümlü kaza / Çevresel felaket |
+| 40 | Öldürücü kaza / Tam Maluliyet / Ciddi çevresel zarar |
+| 15 | Sakatlık / Uzuv Kaybı / Meslek Hastalığı |
+| 7 | Önemli hasar, dış ilkyardım ihtiyacı |
+| 3 | Küçük hasar, dahili ilk yardım |
+| 1 | Ucuz atlatma, ramak kaldı |
 
 ### Risk Skalası
 
@@ -169,12 +158,8 @@ R = P × F × E
       "category": "Fiziksel Tehlikeler",
       "description": "Yüksekten düşme riski",
       "ai_confidence": 0.88,
-      "P": 0.5,
-      "F": 3,
-      "E": 15,
-      "R": 22.5,
+      "P": 0.5, "F": 3, "E": 15, "R": 22.5,
       "risk_level": "ORTA",
-      "action": "🟡 1 ay içinde iyileştirme planla",
       "controls": {
         "elimination": "Yüksekte çalışmayı ortadan kaldır",
         "substitution": "Uzun kollu ekipman kullan",
@@ -187,12 +172,9 @@ R = P × F × E
   "summary": {
     "toplam_tehlike": 3,
     "max_skor": 90,
-    "ort_skor": 45.2,
-    "kabul_edilemez": 0,
     "kritik": 1,
     "onemli": 1,
-    "orta": 1,
-    "dusuk": 0
+    "orta": 1
   }
 }
 ```
@@ -205,8 +187,9 @@ R = P × F × E
 jsa-agent/
 ├── jsa_agent.py        → Streamlit arayüzü (3 adımlı UI)
 ├── jsa_core.py         → Fine-Kinney motoru + kontrol hiyerarşisi + JSON şeması
-├── jsa_visual.py       → Gemini Vision API + ReportLab PDF üretimi
-├── requirements.txt    → 4 Python paketi
+├── jsa_visual.py       → GPT-4o Vision API + ReportLab PDF üretimi
+├── requirements.txt    → Python bağımlılıkları
+├── packages.txt        → Sistem bağımlılıkları (DejaVu font)
 ├── .python-version     → Python 3.11
 └── README.md
 ```
@@ -220,12 +203,12 @@ jsa-agent/
 1. Repoyu fork'la
 2. [share.streamlit.io](https://share.streamlit.io) → **New app**
 3. **Main file:** `jsa_agent.py` | **Python:** `3.11`
-4. Deploy → URL'i paylaş
+4. Deploy → [jsa-agent.streamlit.app](https://jsa-agent.streamlit.app)
 
 ### Lokal
 
 ```bash
-git clone https://github.com/KULLANICI_ADI/jsa-agent
+git clone https://github.com/Ugeyik83/jsa-agent
 cd jsa-agent
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
@@ -236,23 +219,22 @@ streamlit run jsa_agent.py
 
 ## 🔑 API Key
 
-1. [Google AI Studio](https://aistudio.google.com/app/apikey) → **Create API Key**
-2. Uygulamanın sol paneline yapıştır
+**OpenAI:** [platform.openai.com/api-keys](https://platform.openai.com/api-keys) → Create new secret key
 
-**Ücretsiz limit:** 15 istek/dk · 1.500 istek/gün
+Uygulamanın sol paneline `sk-...` formatında yapıştır. GPT-4o kullanıldığından görsel analiz kalitesi yüksektir.
 
 ---
 
 ## 🔧 Tehlike Matrisini Güncelleme
 
-`jsa_core.py` içindeki `HAZARD_CATEGORIES` ve `CONTROL_HIERARCHY` sözlüklerini kendi matrisinizle doldurun. Gemini otomatik olarak bu listeyi kullanır.
+`jsa_core.py` içindeki `HAZARD_CATEGORIES` ve `CONTROL_HIERARCHY` sözlüklerini kendi kurumsal matrisinizle doldurun. GPT-4o otomatik olarak bu listeyi kullanarak sınıflandırma yapar.
 
 ---
 
 ## ⚠️ Sınırlılıklar
 
 - P ve F operasyonel veri gerektirdiğinden kullanıcı tarafından girilir
-- Gizli mekanik tehlikeler tespit edilemez
+- Gizli mekanik tehlikeler (pano içi, boru içi) tespit edilemez
 - Düşük güven skoru (%50 altı) sahada doğrulama gerektirir
 - Profesyonel İSG değerlendirmesinin yerini **tutmaz**, destekler
 
