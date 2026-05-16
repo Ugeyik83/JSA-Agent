@@ -41,7 +41,6 @@ RISK_LEVELS = [
 ]
 
 # ── Tehlike Kategorileri (Placeholder — matris verilince güncellenecek) ────────
-# Her kategori: { "kategori_adi": ["tehlike1", "tehlike2", ...] }
 HAZARD_CATEGORIES = {
     "Fiziksel Tehlikeler": [
         "Yüksekten düşme riski",
@@ -93,9 +92,6 @@ HAZARD_CATEGORIES = {
 }
 
 # ── Risk Kontrol Hiyerarşisi (ISO 45001 / NIOSH) ─────────────────────────────
-# Her tehlike kategorisi için önlem önerileri — Elimination → PPE sırası
-# Matris verilince bu sözlük genişletilecek
-
 CONTROL_HIERARCHY = {
     "Fiziksel Tehlikeler": {
         "Yüksekten düşme riski": {
@@ -232,16 +228,24 @@ CONTROL_LABELS = {
 def get_controls(category: str, description: str) -> dict:
     """
     Tehlike kategorisi ve açıklamasına göre kontrol önerileri döndür.
-    Önce spesifik eşleşme dene, bulamazsan genel kategori önermesini kullan.
+    Önce kategoriye gir, sonra açıklamada anahtar kelime ara.
+    Eşleşme yoksa genel kategori önermesini döndür.
     """
     cat_controls = CONTROL_HIERARCHY.get(category, {})
+    desc_lower = description.lower()
 
-    # Açıklama içinde anahtar kelime eşleştir
+    best_match = None
+    best_score = 0
     for hazard_key, controls in cat_controls.items():
-        if any(word in description for word in hazard_key.split()[:3]):
-            return controls
+        keywords = hazard_key.lower().split()[:4]
+        score = sum(1 for kw in keywords if kw in desc_lower)
+        if score > best_score:
+            best_score = score
+            best_match = controls
 
-    # Spesifik eşleşme yoksa genel kategori önermesi
+    if best_match and best_score >= 1:
+        return best_match
+
     return GENERAL_CONTROLS.get(category, {
         "administrative": "Sahaya özel risk değerlendirmesi yapın",
         "ppe":            "Uygun KKD belirleyin"
@@ -254,32 +258,6 @@ def build_json_output(meta: dict, hazard_rows: list) -> dict:
     """
     Standart JSA JSON çıktısı üret.
     Harici sistemlere aktarım ve audit trail için kullanılır.
-
-    Schema:
-    {
-      "site": str,
-      "department": str,
-      "analyst": str,
-      "date": str,
-      "hazards": [
-        {
-          "hazard_id": str,
-          "category": str,
-          "description": str,
-          "ai_confidence": float,
-          "P": float, "F": float, "E": float, "R": float,
-          "risk_level": str,
-          "controls": {
-            "elimination": str,
-            "substitution": str,
-            "engineering": str,
-            "administrative": str,
-            "ppe": str
-          }
-        }
-      ],
-      "summary": { ... }
-    }
     """
     hazards_out = []
     for i, row in enumerate(hazard_rows, 1):
@@ -318,17 +296,12 @@ def build_json_output(meta: dict, hazard_rows: list) -> dict:
 # ── Hesaplama Fonksiyonları ────────────────────────────────────────────────────
 
 def calculate_risk(p_label: str, f_label: str, e_label: str) -> dict:
-    """
-    Fine-Kinney risk skoru hesapla.
-    R = P × F × E
-    Döndürür: skor, seviye, renk, aksiyon
-    """
+    """Fine-Kinney risk skoru hesapla. R = P × F × E"""
     p = PROBABILITY[p_label]
     f = FREQUENCY[f_label]
     e = SEVERITY[e_label]
     r = round(p * f * e, 2)
 
-    # Eşik tablosundan seviye bul
     level, color, action = "DÜŞÜK", "#228B22", "🟢 Periyodik gözlem yeterli"
     for threshold, lvl, clr, act in RISK_LEVELS:
         if r > threshold:
@@ -345,7 +318,7 @@ def calculate_risk(p_label: str, f_label: str, e_label: str) -> dict:
 
 
 def get_all_hazards_flat() -> list:
-    """Tüm tehlikeleri düz liste olarak döndür (Gemini prompt için)."""
+    """Tüm tehlikeleri düz liste olarak döndür (prompt için)."""
     all_hazards = []
     for cat, hazards in HAZARD_CATEGORIES.items():
         for h in hazards:
@@ -354,10 +327,7 @@ def get_all_hazards_flat() -> list:
 
 
 def get_risk_summary(results: list) -> dict:
-    """
-    Çoklu tehlike listesinden özet istatistik üret.
-    results: calculate_risk() çıktılarının listesi
-    """
+    """Çoklu tehlike listesinden özet istatistik üret."""
     if not results:
         return {}
 
