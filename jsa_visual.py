@@ -199,11 +199,11 @@ RISK_COLOR_MAP = {
 def _styles():
     custom = {
         "title": ParagraphStyle(
-            "title", fontName=FONT_BOLD, fontSize=18,
-            textColor=DARK_BLUE, alignment=TA_CENTER, spaceAfter=4
+            "title", fontName=FONT_BOLD, fontSize=22,
+            textColor=DARK_BLUE, alignment=TA_CENTER, spaceAfter=12
         ),
         "subtitle": ParagraphStyle(
-            "subtitle", fontName=FONT_NORMAL, fontSize=10,
+            "subtitle", fontName=FONT_NORMAL, fontSize=11,
             textColor=MID_BLUE, alignment=TA_CENTER, spaceAfter=2
         ),
         "section": ParagraphStyle(
