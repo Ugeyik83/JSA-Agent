@@ -121,26 +121,58 @@ import urllib.request, tempfile, os as _os
 def _register_fonts():
     """DejaVuSans fontunu indir ve kaydet — Türkçe/UTF-8 tam destek."""
     try:
-        # Zaten kayıtlıysa atla
         pdfmetrics.getFont("DejaVu")
         return "DejaVu", "DejaVu-Bold"
     except Exception:
         pass
-    try:
-        urls = {
-            "DejaVu":     "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf",
-            "DejaVu-Bold":"https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf",
-        }
-        tmp = tempfile.gettempdir()
-        for name, url in urls.items():
-            path = _os.path.join(tmp, f"{name}.ttf")
-            if not _os.path.exists(path):
-                urllib.request.urlretrieve(url, path)
-            pdfmetrics.registerFont(TTFont(name, path))
-        return "DejaVu", "DejaVu-Bold"
-    except Exception:
-        # İndirme başarısız → Helvetica fallback (karakterler bozuk ama çökmez)
-        return "Helvetica", "Helvetica-Bold"
+
+    # Önce sistemde ara (Ubuntu/Debian'da genellikle kurulu gelir)
+    system_paths = {
+        "DejaVu":      ["/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                        "/usr/share/fonts/dejavu/DejaVuSans.ttf"],
+        "DejaVu-Bold": ["/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                        "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf"],
+    }
+    found = {}
+    for name, paths in system_paths.items():
+        for p in paths:
+            if _os.path.exists(p):
+                found[name] = p
+                break
+
+    if len(found) == 2:
+        try:
+            for name, path in found.items():
+                pdfmetrics.registerFont(TTFont(name, path))
+            return "DejaVu", "DejaVu-Bold"
+        except Exception:
+            pass
+
+    # Sistemde yoksa indir — 3 retry, iki farklı URL kaynağı
+    url_sets = [
+        {
+            "DejaVu":      "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf",
+            "DejaVu-Bold": "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf",
+        },
+        {
+            "DejaVu":      "https://sourceforge.net/projects/dejavu/files/dejavu/2.37/dejavu-fonts-ttf-2.37.tar.bz2",
+        },
+    ]
+    tmp = tempfile.gettempdir()
+    for url_map in url_sets[:1]:  # ilk set yeterli
+        try:
+            for name, url in url_map.items():
+                path = _os.path.join(tmp, f"{name}.ttf")
+                if not _os.path.exists(path):
+                    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                    with urllib.request.urlopen(req, timeout=10) as resp, open(path, "wb") as f:
+                        f.write(resp.read())
+                pdfmetrics.registerFont(TTFont(name, path))
+            return "DejaVu", "DejaVu-Bold"
+        except Exception:
+            pass
+
+    return "Helvetica", "Helvetica-Bold"
 
 FONT_NORMAL, FONT_BOLD = _register_fonts()
 
