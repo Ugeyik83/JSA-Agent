@@ -5,30 +5,30 @@
 # ── Fine-Kinney Parametreleri ─────────────────────────────────────────────────
 
 PROBABILITY = {
-    "Çok muhtemel (1.0)":          1.0,
-    "Muhtemel (0.5)":              0.5,
-    "Az olası (0.2)":              0.2,
-    "Nadiren olası (0.1)":         0.1,
-    "Hayal edilebilir (0.05)":     0.05,
-    "Pratik imkansız (0.01)":      0.01,
+    "Çok muhtemel (10.0)":          10.0,
+    "Muhtemel (6.0)":              6.0,
+    "Olası (3.0)":              3.0,
+    "Mümkün fakat düşük (1.0)":         1.0,
+    "Beklenmez fakat mümkün (0.5)":     0.5,
+    "Beklenmez (0.2)":      0.2,
 }
 
 FREQUENCY = {
-    "Sürekli (10)":                10,
-    "Sık sık, günde birkaç kez (6)": 6,
-    "Günde bir kez (3)":           3,
-    "Haftada bir (2)":             2,
-    "Ayda bir (1)":                1,
-    "Yılda bir (0.5)":             0.5,
+    "Hemen hemen sürekli (Bir saate birkaç defa)(10)":   10,
+    "Sık (Günde bir veya birkaç defa) (6)": 6,
+    "Ara sıra (haftada bir veya birkaç defa) (3)":           3,
+    "Sık değil (Ayda bir veya birkaç defa) (2)":             2,
+    "Seyrek (Yılda biraç defa) (1)":                1,
+    "Çok seyrek (Yılda bir defa veya daha az) (0.5)":       0.5,
 }
 
 SEVERITY = {
-    "Felaket — Çok sayıda ölüm (100)":     100,
-    "Çok ciddi — Birkaç ölüm (40)":         40,
-    "Ciddi — Bir ölüm (15)":                15,
-    "Önemli — Ağır yaralanma (7)":           7,
-    "Hafif — İlk yardım (3)":               3,
-    "İhmal edilebilir — Küçük kesik (1)":    1,
+    "Birden fazla ölümlü kaza/Çevresel felaket (100)":     100,
+    "Öldürücü kaza/Tam Maluliyet/Ciddi çevresel zarar (40)":         40,
+    "Sakatlık /Uzuv Kaybı/Çevresel engel oluşturma/Meslek Hastalığı (15)":                15,
+    "Önemli hasar, yaralanma, dış ilkyardım ihtiyacı/arazi sınırları dışında çevresel zarar (7)":           7,
+    "Küçük hasar/yaralanma, dahili ilk yardım/arazi sınırları içinde çevresel zarar(3)":               3,
+    "Ucuz atlatma, ramak kaldı/Çevresel zarar yok(1)":    1,
 }
 
 # Risk Skoru → Seviye eşikleri (Fine-Kinney standart)
