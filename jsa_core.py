@@ -528,7 +528,7 @@ def calculate_risk(p_label: str, f_label: str, e_label: str) -> dict:
 
     level, color, action = "DÜŞÜK", "#228B22", "🟢 Periyodik gözlem yeterli"
     for threshold, lvl, clr, act in RISK_LEVELS:
-        if r > threshold:
+        if r >= threshold and threshold > 0:
             level, color, action = lvl, clr, act
             break
 

@@ -23,9 +23,12 @@ from jsa_core import HAZARD_CATEGORIES, get_all_hazards_flat, get_controls, CONT
 
 # ── OpenAI Konfigürasyonu ──────────────────────────────────────────────────────
 
-def init_gemini(api_key: str):
-    """OpenAI client döndür — fonksiyon adı geriye dönük uyumluluk için korundu."""
+def init_client(api_key: str) -> OpenAI:
+    """OpenAI client oluştur."""
     return OpenAI(api_key=api_key)
+
+# Geriye dönük uyumluluk için alias
+init_gemini = init_client
 
 
 def image_to_base64_str(image: Image.Image) -> str:
@@ -36,11 +39,13 @@ def image_to_base64_str(image: Image.Image) -> str:
     return base64.b64encode(buf.read()).decode("utf-8")
 
 
-def detect_hazards_gemini(client, image: Image.Image) -> dict:
+def detect_hazards(client: OpenAI, image: Image.Image) -> dict:
     """
-    OpenAI GPT-4o Vision ile tehlike tespiti.
-    Fonksiyon adı geriye dönük uyumluluk için korundu.
-    Çıktı: {"hazards": [...], "general_observations": str, "missing_ppe": [...]}
+    GPT-4o Vision ile tehlike tespiti.
+    Döndürür: {"hazards": [...], "general_observations": str, "missing_ppe": [...]}
+
+    NOT: confidence değeri modelin kendi beyanıdır (0.0–1.0),
+    istatistiksel olarak kalibre edilmiş bir güven skoru değildir.
     """
     hazard_list_str = "\n".join(f"- {h}" for h in get_all_hazards_flat())
     b64_image = image_to_base64_str(image)
@@ -63,7 +68,7 @@ SADECE aşağıdaki JSON formatında yanıt ver. Başka hiçbir metin, açıklam
       "category": "Kategori adı",
       "location": "Görselde nerede görüldüğü (sol/sağ/ön plan vb.)",
       "affected_body_part": "Etkilenebilecek vücut bölgesi",
-      "suggested_severity": "Felaket — Çok sayıda ölüm (100) veya diğer severity seçeneklerinden biri",
+      "suggested_severity": "Severity seçeneklerinden biri",
       "confidence": 0.80
     }}
   ],
@@ -71,7 +76,7 @@ SADECE aşağıdaki JSON formatında yanıt ver. Başka hiçbir metin, açıklam
   "missing_ppe": ["eksik KKD 1", "eksik KKD 2"]
 }}
 
-Güven skoru (confidence) 0.0–1.0 arası olmalı.
+confidence: Modelin bu tespite olan güven beyanı (0.0–1.0). İstatistiksel güven skoru değildir.
 Eğer görüntü net değilse veya tehlike tespit edemiyorsan boş liste döndür.
 """
 
@@ -88,10 +93,7 @@ Eğer görüntü net değilse veya tehlike tespit edemiyorsan boş liste döndü
                             "detail": "high"
                         }
                     },
-                    {
-                        "type": "text",
-                        "text": prompt
-                    }
+                    {"type": "text", "text": prompt}
                 ]
             }
         ],
@@ -107,8 +109,12 @@ Eğer görüntü net değilse veya tehlike tespit edemiyorsan boş liste döndü
         return {
             "hazards": [],
             "general_observations": "Görüntü analiz edilemedi.",
-            "missing_ppe": []
+            "missing_ppe": [],
+            "_parse_error": raw[:200]  # debug için ham çıktının ilk 200 karakteri
         }
+
+# Geriye dönük uyumluluk için alias
+detect_hazards_gemini = detect_hazards
 
 
 # ── PDF Rapor Üretimi ─────────────────────────────────────────────────────────
@@ -199,11 +205,11 @@ RISK_COLOR_MAP = {
 def _styles():
     custom = {
         "title": ParagraphStyle(
-            "title", fontName=FONT_BOLD, fontSize=22,
-            textColor=DARK_BLUE, alignment=TA_CENTER, spaceAfter=12
+            "title", fontName=FONT_BOLD, fontSize=18,
+            textColor=DARK_BLUE, alignment=TA_CENTER, spaceAfter=4
         ),
         "subtitle": ParagraphStyle(
-            "subtitle", fontName=FONT_NORMAL, fontSize=11,
+            "subtitle", fontName=FONT_NORMAL, fontSize=10,
             textColor=MID_BLUE, alignment=TA_CENTER, spaceAfter=2
         ),
         "section": ParagraphStyle(
@@ -378,7 +384,7 @@ def generate_pdf(
                 Paragraph(str(risk["P"]), S["cell"]),
                 Paragraph(str(risk["F"]), S["cell"]),
                 Paragraph(str(risk["E"]), S["cell"]),
-                Paragraph(f"<b>{risk['R']}</b>", S["cell_bold"]),
+                Paragraph(f"<b>{risk['R']}</b>", S["cell_bold_dark"]),
                 Paragraph(f"<b>{level}</b>", ParagraphStyle(
                     "lvl", fontName=FONT_BOLD, fontSize=8,
                     textColor=lvl_color

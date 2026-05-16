@@ -156,17 +156,16 @@ if st.session_state.gemini_result:
                     st.markdown(f"**Konum:** {h.get('location', '—')}")
                     st.markdown(f"**Etkilenen Bölge:** {h.get('affected_body_part', '—')}")
                     conf = h.get("confidence", 0)
-                    # Confidence renklendirme: yeşil ≥0.75 / sarı 0.5–0.75 / kırmızı <0.5
                     if conf >= 0.75:
                         conf_color = "🟢"
-                        conf_note  = "Yüksek güven — AI tespiti güvenilir"
+                        conf_note  = "Yüksek — sahada doğrulama önerilir"
                     elif conf >= 0.50:
                         conf_color = "🟡"
-                        conf_note  = "Orta güven — Sahada doğrulayın"
+                        conf_note  = "Orta — sahada doğrulayın"
                     else:
                         conf_color = "🔴"
-                        conf_note  = "Düşük güven — Manuel inceleme gerekli"
-                    st.progress(conf, text=f"{conf_color} AI Güven: %{int(conf*100)} — {conf_note}")
+                        conf_note  = "Düşük — manuel inceleme gerekli"
+                    st.progress(conf, text=f"{conf_color} Model Tahmin Beyanı: %{int(conf*100)} — {conf_note}")
 
                 with col_pfk:
                     st.markdown("**Fine-Kinney Parametreleri**")
