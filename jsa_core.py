@@ -1,5 +1,5 @@
 # jsa_core.py — Fine-Kinney Kural Motoru
-# v1.2 — Kurumsal tehlike matrisi entegre edildi (ISO 13849 uyumlu)
+# v1.3 — Orijinal tehlike kategorileri ve kontrol hiyerarşisi restore edildi
 
 # ── Fine-Kinney Parametreleri ─────────────────────────────────────────────────
 
@@ -30,7 +30,6 @@ SEVERITY = {
     "Ucuz atlatma, ramak kaldı/Çevresel zarar yok (1)":                                                     1,
 }
 
-# Risk Skoru → Seviye eşikleri
 RISK_LEVELS = [
     (400, "KABUL EDİLEMEZ", "#8B0000", "⛔ Derhal durdur, çalışmayı başlatma"),
     (200, "KRİTİK",         "#FF0000", "🔴 1 hafta içinde acil aksiyon"),
@@ -39,410 +38,317 @@ RISK_LEVELS = [
     (0,   "DÜŞÜK",          "#228B22", "🟢 Periyodik gözlem yeterli"),
 ]
 
-# ── Tehlike Kategorileri — Kurumsal Matris (ISO 13849 uyumlu) ─────────────────
+# ── Tehlike Kategorileri ──────────────────────────────────────────────────────
 
 HAZARD_CATEGORIES = {
-    "1 — Mekanik Tehlikeler": [
-        "1.1 Korumasız hareket eden makine parçaları",
-        "1.2 Tehlikeli yüzeylere sahip parçalar",
-        "1.3 Hareketli taşıma parçaları / hareketli iş araçları",
-        "1.4 Kontrolsüz hareket eden parçalar",
-        "1.5 Yıkılma, kayma, takılma, bükülme",
-        "1.6 Düşme",
+    "Fiziksel Tehlikeler": [
+        "Yüksekten düşme riski",
+        "Döküntü / kaygan zemin",
+        "Çarpma / takılma",
+        "Sıkışma / ezilme",
+        "Gürültü maruziyeti",
+        "Titreşim maruziyeti",
+        "Aşırı sıcaklık (sıcak/soğuk)",
+        "Elektrik çarpması",
+        "Yüklerin devrilmesi / düşmesi",
+        "Radyasyon maruziyeti",
     ],
-    "2 — Elektrikle İlgili Tehlikeler": [
-        "2.1 Elektrik çarpması",
-        "2.2 Elektrik arkı",
-        "2.3 Elektrostatik yüklenme",
+    "Kimyasal Tehlikeler": [
+        "Kimyasal madde teması (cilt/göz)",
+        "Kimyasal buhar inhalasyonu",
+        "Yanıcı / patlayıcı madde",
+        "Aşındırıcı madde",
+        "Toksik madde maruziyeti",
     ],
-    "3 — Tehlikeli Maddeler": [
-        "3.1 Gazlar",
-        "3.2 Buharlar",
-        "3.3 Aerosoller (tozlar, duman, sis)",
-        "3.4 Sıvılar",
-        "3.5 Katı malzeme",
+    "Ergonomik Tehlikeler": [
+        "Ağır yük taşıma",
+        "Tekrarlayan hareket",
+        "Zorlamalı / uygunsuz postür",
+        "Uzun süreli statik duruş",
+        "El-kol titreşimi",
     ],
-    "4 — Biyolojik Tehlikeler": [
-        "4.1 Patojen mikro organizmalar vasıtasıyla enfeksiyon tehlikesi (bakteri, virüs, mantar)",
-        "4.2 Mikro organizmaların duyarlılığı arttırıcı ve toksik etkileri",
+    "Biyolojik Tehlikeler": [
+        "Biyolojik ajan maruziyeti",
+        "Keskin cisim yaralanması",
+        "Haşere / hayvan teması",
     ],
-    "5 — Yangın ve Patlama Tehlikeleri": [
-        "5.1 Yanıcı katı maddeler, sıvılar, gazlar",
-        "5.2 Patlayıcı ortamlar",
-        "5.3 Patlayıcı maddeler",
+    "Mekanik Tehlikeler": [
+        "Hareketli makine parçaları",
+        "Kesici / delici alet",
+        "Basınçlı sistem patlaması",
+        "Vinç / kaldırma ekipmanı arızası",
     ],
-    "6 — Termik Tehlikeler": [
-        "6.1 Sıcak parçalar / yüzeyler",
-        "6.2 Soğuk parçalar / yüzeyler",
+    "Yangın / Patlama": [
+        "Yangın çıkma riski",
+        "Patlama riski",
+        "Duman / oksijen azalması",
     ],
-    "7 — Özel Fiziksel Etkilerin Yol Açtığı Tehlikeler": [
-        "7.1 Gürültü",
-        "7.2 Ultrason, kızılötesi ses",
-        "7.3 Bütün vücut titreşimi",
-        "7.4 El-kol titreşimi",
-        "7.5 İyonize olmayan ışınlar (kızıl ve mor ötesi, lazer ışınları)",
-        "7.6 İyonize ışınlar (röntgen, gama, parçacık ışınları)",
-        "7.7 Elektromanyetik alanlar",
-        "7.8 Düşük basınç veya yüksek basınç",
-    ],
-    "8 — Çalışma Koşullarının Yol Açtığı Tehlikeler": [
-        "8.1 Çevrenin havası (sıcaklık, soğuk)",
-        "8.2 Aydınlatma, ışık",
-        "8.3 Boğulma",
-    ],
-    "9 — Fiziksel Baskılar": [
-        "9.1 Ağır dinamik çalışma",
-        "9.2 Tek yönlü dinamik çalışma",
-        "9.3 Statik çalışma",
-        "9.4 Statik ve dinamik çalışmanın kombinasyonu",
-    ],
-    "10 — Psikolojik Faktörler": [
-        "10.1 Yetersiz görev tasarımı",
-        "10.2 Organizasyon yetersizliği",
-        "10.3 Yetersiz sosyal koşullar",
-        "10.4 Yetersiz çalışma yeri ve çalışma çevresi tasarımı",
-    ],
-    "11 — Diğer Tehlikeler": [
-        "11.1 İnsanların yol açtığı tehlikeler",
-        "11.2 Hayvanların yol açtığı tehlikeler",
-        "11.3 Bitkilerin ve bitkisel ürünlerin yol açtığı tehlikeler",
+    "Psikososyal Tehlikeler": [
+        "Aşırı iş yükü / stres",
+        "Şiddet / taciz riski",
+        "Yalnız çalışma tehlikesi",
     ],
 }
 
 # ── Risk Kontrol Hiyerarşisi (ISO 45001 / NIOSH) ─────────────────────────────
 
 CONTROL_HIERARCHY = {
-    "1 — Mekanik Tehlikeler": {
-        "1.1 Korumasız hareket eden makine parçaları": {
-            "elimination":    "Tehlikeli hareketi ortadan kaldır, süreci yeniden tasarla",
-            "substitution":   "Güvenli tasarımlı makineyle değiştir",
-            "engineering":    "Koruyucu kapak, muhafaza, fotosell / ışık perdesi bariyer",
-            "administrative": "LOTO prosedürü, makine güvenlik talimatı, operatör eğitimi",
-            "ppe":            "Sıkışmaya karşı eldiven, saç/kıyafet düzeni",
-        },
-        "1.2 Tehlikeli yüzeylere sahip parçalar": {
-            "elimination":    "Keskin kenar ve yüzeyleri tasarımda ortadan kaldır",
-            "substitution":   "Yuvarlatılmış kenar / güvenli profil kullan",
-            "engineering":    "Kenar koruyucu, köşebent, bariyer",
-            "administrative": "Güvenli çalışma talimatı, eğitim",
-            "ppe":            "Kesme dirençli eldiven (EN 388), yüz siperi",
-        },
-        "1.3 Hareketli taşıma parçaları / hareketli iş araçları": {
-            "elimination":    "Manuel taşıma ihtiyacını ortadan kaldır",
-            "substitution":   "Otomatik taşıma sistemi kullan",
-            "engineering":    "Yaya koridoru, bariyer, uyarı ışığı / ses sistemi",
-            "administrative": "Trafik yönetim planı, hız limiti, sürücü eğitimi",
-            "ppe":            "Yüksek görünürlüklü yelek (EN ISO 20471), baret",
-        },
-        "1.4 Kontrolsüz hareket eden parçalar": {
-            "elimination":    "Kontrolsüz harekete neden olan kaynağı kaldır",
-            "substitution":   "Mekanik kilitleme sistemi kullan",
-            "engineering":    "Tutma freni, emniyet mandalı, bariyer",
-            "administrative": "Bakım talimatı, periyodik kontrol çizelgesi",
-            "ppe":            "Baret (EN 397), yüz siperi, çelik burunlu bot",
-        },
-        "1.5 Yıkılma, kayma, takılma, bükülme": {
-            "elimination":    "Zemin düzensizliklerini ve engelleri kaldır",
-            "substitution":   "Kaymaz zemin kaplaması kullan",
-            "engineering":    "Drenaj sistemi, sarı uyarı bantı, yeterli aydınlatma",
-            "administrative": "Düzenli zemin kontrol çizelgesi, temizlik prosedürü",
-            "ppe":            "Kaymaz tabanlı güvenlik botu (EN ISO 20345)",
-        },
-        "1.6 Düşme": {
+    "Fiziksel Tehlikeler": {
+        "Yüksekten düşme riski": {
             "elimination":    "Yüksekte çalışmayı ortadan kaldır, zemin seviyesinde yapılandır",
             "substitution":   "Uzun kollu ekipman / teleskopik alet kullan",
-            "engineering":    "Güvenlik korkuluğu, güvenlik ağı, iskele sistemi",
-            "administrative": "Yüksekte çalışma izin sistemi, buddy system",
+            "engineering":    "Güvenlik korkuluğu, güvenlik ağı, iskele sistemi kur",
+            "administrative": "Yüksekte çalışma izin sistemi uygula, buddy system",
             "ppe":            "Tam vücut emniyet kemeri, bağlantı halatı (EN 361)",
         },
-    },
-    "2 — Elektrikle İlgili Tehlikeler": {
-        "2.1 Elektrik çarpması": {
-            "elimination":    "Gereksiz elektrikli ekipmanı devre dışı bırak",
-            "substitution":   "Düşük gerilimli sistem kullan",
-            "engineering":    "İzolasyon, topraklama, kaçak akım rölesi (RCD)",
-            "administrative": "Kilitleme/etiketleme (LOTO) prosedürü, izinli çalışma",
-            "ppe":            "Yalıtımlı eldiven (EN 60903), yalıtımlı bot",
+        "Döküntü / kaygan zemin": {
+            "elimination":    "Sızıntı kaynağını tespit et ve kapat",
+            "substitution":   "Kaymaz kaplama malzemesi kullan",
+            "engineering":    "Drenaj sistemi, ızgara platform, sarı bant sınır çizgisi",
+            "administrative": "Düzenli zemin kontrol çizelgesi, ıslak zemin işareti",
+            "ppe":            "Kaymaz tabanlı güvenlik botu (EN ISO 20345)",
         },
-        "2.2 Elektrik arkı": {
-            "elimination":    "Enerji altında çalışmaktan kaçın",
-            "substitution":   "Uzaktan kumanda sistemi kullan",
-            "engineering":    "Ark flash bariyeri, güvenli mesafe işareti",
-            "administrative": "Elektrik izin sistemi, ark flash risk analizi",
-            "ppe":            "Ark flash koruyucu elbise (ATPV değerine göre), yüz siperi",
+        "Çarpma / takılma": {
+            "elimination":    "Engel ve çarpışma noktalarını kaldır",
+            "substitution":   "Düzenli yerleşim planı ile mesafeyi artır",
+            "engineering":    "Köşe koruyucu, sarı-siyah bant, yeterli aydınlatma",
+            "administrative": "Yaya trafik planı, hız limiti talimatı",
+            "ppe":            "Baret (EN 397), yüksek görünürlüklü yelek (EN ISO 20471)",
         },
-        "2.3 Elektrostatik yüklenme": {
-            "elimination":    "Statik yük üreten süreci kaldır",
-            "substitution":   "İletken malzeme kullan",
-            "engineering":    "Topraklama, iyonizatör, nem kontrolü",
-            "administrative": "Antistatik çalışma prosedürü",
-            "ppe":            "Antistatik iş elbisesi ve ayakkabı",
+        "Sıkışma / ezilme": {
+            "elimination":    "Sıkışma riskli alanı yeniden tasarla",
+            "substitution":   "Daha geniş geçiş aralığı sağla",
+            "engineering":    "Fotosell bariyer, acil durdurma butonu",
+            "administrative": "LOTO prosedürü, güvenli çalışma talimatı",
+            "ppe":            "Çelik burunlu bot, baret, eldiven",
         },
-    },
-    "3 — Tehlikeli Maddeler": {
-        "3.1 Gazlar": {
-            "elimination":    "Tehlikeli gazı formülasyondan çıkar",
-            "substitution":   "Daha az tehlikeli alternatif kullan",
-            "engineering":    "Kapalı sistem, gaz dedektörü, acil havalandırma",
-            "administrative": "GBF/SDS eğitimi, gaz ölçüm prosedürü",
-            "ppe":            "Bağımsız hava ikmal cihazı (SCBA) veya uygun maske",
-        },
-        "3.2 Buharlar": {
-            "elimination":    "Buhar üreten işlemi kaldır",
-            "substitution":   "Daha düşük uçuculuklu ürün kullan",
-            "engineering":    "Lokal egzoz havalandırma (LEV), genel havalandırma",
-            "administrative": "TWA/STEL izleme, maruziyet süresi sınırı",
-            "ppe":            "Yarım/tam yüz maskesi, uygun filtre kartuşu (EN 140)",
-        },
-        "3.3 Aerosoller (tozlar, duman, sis)": {
-            "elimination":    "Toz üreten işlemi ıslak yöntemle değiştir",
-            "substitution":   "Daha az toz üreten malzeme kullan",
-            "engineering":    "Lokal egzoz, toz toplama sistemi, kapalı sistem",
-            "administrative": "Maruziyet izleme, rotasyon",
-            "ppe":            "FFP2/FFP3 toz maskesi (EN 149)",
-        },
-        "3.4 Sıvılar": {
-            "elimination":    "Tehlikeli sıvıyı formülasyondan çıkar",
-            "substitution":   "Daha az tehlikeli alternatif kullan",
-            "engineering":    "Kapalı sistem, göz duşu, acil duş, dökülme havuzu",
-            "administrative": "GBF/SDS eğitimi, kimyasal envanter kontrolü",
-            "ppe":            "Kimyasal dirençli eldiven, tam yüz maskesi, apron",
-        },
-        "3.5 Katı malzeme": {
-            "elimination":    "Tehlikeli katı maddeyi kaldır",
-            "substitution":   "Daha güvenli form/granül kullan",
-            "engineering":    "Kapalı taşıma sistemi, toz toplama",
-            "administrative": "Güvenli taşıma ve depolama talimatı",
-            "ppe":            "Toz maskesi, koruyucu eldiven, gözlük",
-        },
-    },
-    "4 — Biyolojik Tehlikeler": {
-        "4.1 Patojen mikro organizmalar vasıtasıyla enfeksiyon tehlikesi (bakteri, virüs, mantar)": {
-            "elimination":    "Patojen kaynağını kaldır / sterilize et",
-            "substitution":   "Daha güvenli biyolojik ajan kullan",
-            "engineering":    "Biyogüvenlik kabini, negatif basınçlı oda",
-            "administrative": "Biyogüvenlik prosedürü, aşılama programı",
-            "ppe":            "Tulum, eldiven, N95/FFP3 maske, gözlük",
-        },
-        "4.2 Mikro organizmaların duyarlılığı arttırıcı ve toksik etkileri": {
-            "elimination":    "Duyarlılaştırıcı ajanı kaldır",
-            "substitution":   "Alternatif ajan kullan",
-            "engineering":    "Havalandırma, kapalı sistem",
-            "administrative": "Sağlık gözetimi, maruziyet kaydı",
-            "ppe":            "Uygun filtreli maske, koruyucu eldiven",
-        },
-    },
-    "5 — Yangın ve Patlama Tehlikeleri": {
-        "5.1 Yanıcı katı maddeler, sıvılar, gazlar": {
-            "elimination":    "Yanıcı madde miktarını minimize et",
-            "substitution":   "Yanmaz / alev geciktirici alternatif kullan",
-            "engineering":    "Sprinkler sistemi, yangın kapısı, duman dedektörü",
-            "administrative": "Acil tahliye planı, yangın tatbikatı, ateşleme izni",
-            "ppe":            "Alev geciktirici iş elbisesi (EN ISO 11612)",
-        },
-        "5.2 Patlayıcı ortamlar": {
-            "elimination":    "Patlayıcı atmosfer oluşumunu engelle",
-            "substitution":   "İnert gaz kullan",
-            "engineering":    "Ex-proof ekipman (ATEX), topraklama, havalandırma",
-            "administrative": "ATEX zonlama, ateşleme kaynağı kontrolü, izin sistemi",
-            "ppe":            "Antistatik iş elbisesi, ATEX onaylı KKD",
-        },
-        "5.3 Patlayıcı maddeler": {
-            "elimination":    "Patlayıcı madde kullanımından kaçın",
-            "substitution":   "Daha az hassas alternatif kullan",
-            "engineering":    "Güvenli depolama (patlayıcı deposu), mesafe bariyeri",
-            "administrative": "Patlayıcı madde lisansı, yetkili personel, izin sistemi",
-            "ppe":            "Balistik koruyucu, yüz siperi",
-        },
-    },
-    "6 — Termik Tehlikeler": {
-        "6.1 Sıcak parçalar / yüzeyler": {
-            "elimination":    "Sıcak yüzeyle temas ihtiyacını kaldır",
-            "substitution":   "Uzaktan kumandalı sistem kullan",
-            "engineering":    "Isı yalıtımı, koruyucu kapak, uyarı etiketi",
-            "administrative": "Sıcak çalışma izni, soğuma süresi talimatı",
-            "ppe":            "Isıya dirençli eldiven (EN 407), yüz siperi",
-        },
-        "6.2 Soğuk parçalar / yüzeyler": {
-            "elimination":    "Soğuk yüzeyle temas ihtiyacını kaldır",
-            "substitution":   "Yalıtımlı ekipman kullan",
-            "engineering":    "Isı yalıtımı, uyarı etiketi",
-            "administrative": "Soğuğa maruziyet süresi sınırı, ısınma molası",
-            "ppe":            "Soğuğa dirençli eldiven ve giysi (EN 511)",
-        },
-    },
-    "7 — Özel Fiziksel Etkilerin Yol Açtığı Tehlikeler": {
-        "7.1 Gürültü": {
+        "Gürültü maruziyeti": {
             "elimination":    "Gürültü kaynağını kaldır",
             "substitution":   "Sessiz ekipmanla değiştir",
             "engineering":    "Akustik kabin, titreşim izolasyonu, bariyer",
             "administrative": "Maruziyet süresi rotasyonu, sessiz alan tanımla",
             "ppe":            "Kulak tıkacı / kulaklık (EN 352), SNR ≥ 30 dB",
         },
-        "7.3 Bütün vücut titreşimi": {
+        "Titreşim maruziyeti": {
             "elimination":    "Titreşim kaynağını kaldır",
-            "substitution":   "Titreşim azaltılmış araç/ekipman kullan",
-            "engineering":    "Titreşim sönümleyici koltuk, yol düzeltme",
-            "administrative": "Maruziyet süresi sınırı, rotasyon",
-            "ppe":            "Titreşim sönümleyici ayakkabı tabanı",
-        },
-        "7.4 El-kol titreşimi": {
-            "elimination":    "El aletini otomasyonla kaldır",
-            "substitution":   "Düşük titreşimli alet kullan",
-            "engineering":    "Titreşim izolasyonlu tutamak",
+            "substitution":   "Düşük titreşimli ekipman kullan",
+            "engineering":    "Titreşim sönümleyici koltuk / tutamak",
             "administrative": "Maruziyet süresi sınırı (EU DIR 2002/44/EC), rotasyon",
             "ppe":            "Titreşim sönümleyici eldiven (EN ISO 10819)",
         },
-        "7.5 İyonize olmayan ışınlar (kızıl ve mor ötesi, lazer ışınları)": {
-            "elimination":    "Işın kaynağını kaldır",
-            "substitution":   "Daha düşük güçlü sistem kullan",
-            "engineering":    "Işın bariyeri, lazer güvenlik muhafazası",
-            "administrative": "Lazer güvenlik eğitimi, uyarı levhası",
-            "ppe":            "Lazer güvenlik gözlüğü (EN 207)",
-        },
-        "7.6 İyonize ışınlar (röntgen, gama, parçacık ışınları)": {
-            "elimination":    "Radyasyon kaynağını kaldır",
-            "substitution":   "Daha düşük aktiviteli kaynak kullan",
-            "engineering":    "Kurşun zırh, mesafe, süre kısıtlaması",
-            "administrative": "Radyasyon çalışma izni, dozimetre takibi",
-            "ppe":            "Kurşun önlük, tiroid koruyucu, dozimetre",
-        },
-        "7.7 Elektromanyetik alanlar": {
-            "elimination":    "EMF kaynağını kaldır",
-            "substitution":   "Düşük EMF yayan ekipman kullan",
-            "engineering":    "Faraday kafesi, mesafe bariyeri",
-            "administrative": "Maruziyet sınır değeri takibi, uyarı levhası",
-            "ppe":            "EMF koruyucu giysi (gerekiyorsa)",
-        },
-        "7.8 Düşük basınç veya yüksek basınç": {
-            "elimination":    "Basınçlı sistem ihtiyacını kaldır",
-            "substitution":   "Daha düşük/güvenli basınç seviyesi kullan",
-            "engineering":    "Emniyet valfi, basınç göstergesi, periyodik test",
-            "administrative": "Periyodik muayene, operatör eğitimi, basınçlı kap izni",
-            "ppe":            "Yüz siperi, basınca dayanıklı eldiven",
-        },
-    },
-    "8 — Çalışma Koşullarının Yol Açtığı Tehlikeler": {
-        "8.1 Çevrenin havası (sıcaklık, soğuk)": {
+        "Aşırı sıcaklık (sıcak/soğuk)": {
             "elimination":    "Aşırı sıcaklık ortamında çalışmayı kaldır",
             "substitution":   "İklimlendirilmiş alan kullan",
             "engineering":    "Isıtma/soğutma sistemi, havalandırma",
             "administrative": "Maruziyet süresi sınırı, su ve mola takvimi",
             "ppe":            "Isı / soğuk koruyucu giysi, iklim ölçer",
         },
-        "8.2 Aydınlatma, ışık": {
-            "elimination":    "Yetersiz aydınlatma gerektiren çalışmayı kaldır",
-            "substitution":   "Yeterli lümen değerinde aydınlatma kullan",
-            "engineering":    "Ek aydınlatma armatürü, acil aydınlatma",
-            "administrative": "Aydınlatma seviyesi periyodik ölçümü (EN 12464)",
-            "ppe":            "Baş lambası, kişisel aydınlatma ekipmanı",
+        "Elektrik çarpması": {
+            "elimination":    "Gereksiz elektrikli ekipmanı devre dışı bırak",
+            "substitution":   "Düşük gerilimli sistem kullan",
+            "engineering":    "İzolasyon, topraklama, kaçak akım rölesi (RCD)",
+            "administrative": "Kilitleme/etiketleme (LOTO) prosedürü, izinli çalışma",
+            "ppe":            "Yalıtımlı eldiven (EN 60903), yalıtımlı bot",
         },
-        "8.3 Boğulma": {
-            "elimination":    "Kapalı alan çalışmasını kaldır",
-            "substitution":   "Uzaktan kumanda ile çalış",
-            "engineering":    "Sürekli gaz izleme, mekanik havalandırma",
-            "administrative": "Kapalı alan izin sistemi, gözetçi, kurtarma planı",
-            "ppe":            "SCBA veya hava ikmal hattı, can kurtarma halatı",
+        "Yüklerin devrilmesi / düşmesi": {
+            "elimination":    "Yük taşıma ihtiyacını ortadan kaldır",
+            "substitution":   "Mekanik taşıma sistemi kullan",
+            "engineering":    "Yük sabitleme sistemi, bariyer, bariyerli depolama",
+            "administrative": "İstif yükseklik limiti, yük güvenlik talimatı",
+            "ppe":            "Baret (EN 397), çelik burunlu bot",
+        },
+        "Radyasyon maruziyeti": {
+            "elimination":    "Radyasyon kaynağını kaldır",
+            "substitution":   "Daha düşük aktiviteli kaynak kullan",
+            "engineering":    "Kurşun zırh, mesafe bariyeri, uyarı levhası",
+            "administrative": "Radyasyon çalışma izni, dozimetre takibi",
+            "ppe":            "Kurşun önlük, tiroid koruyucu, dozimetre",
         },
     },
-    "9 — Fiziksel Baskılar": {
-        "9.1 Ağır dinamik çalışma": {
-            "elimination":    "Manuel kaldırma ihtiyacını ortadan kaldır",
+    "Kimyasal Tehlikeler": {
+        "Kimyasal madde teması (cilt/göz)": {
+            "elimination":    "Kimyasalı formülasyondan çıkar",
+            "substitution":   "Daha az tehlikeli alternatif kullan",
+            "engineering":    "Kapalı sistem, göz duşu, acil duş",
+            "administrative": "GBF/SDS eğitimi, kimyasal envanter kontrolü",
+            "ppe":            "Kimyasal dirençli eldiven, tam yüz maskesi, apron",
+        },
+        "Kimyasal buhar inhalasyonu": {
+            "elimination":    "Buhar üreten işlemi kaldır",
+            "substitution":   "Daha düşük uçuculuklu ürün kullan",
+            "engineering":    "Lokal egzoz havalandırma (LEV), genel havalandırma",
+            "administrative": "TWA/STEL izleme, maruziyet süresi sınırı",
+            "ppe":            "Yarım/tam yüz maskesi, uygun filtre kartuşu (EN 140)",
+        },
+        "Yanıcı / patlayıcı madde": {
+            "elimination":    "Yanıcı madde kullanımını azalt / kaldır",
+            "substitution":   "Alev almaz alternatif kullan",
+            "engineering":    "Ex-proof ekipman, topraklama, patlama kapağı",
+            "administrative": "ATEX zonlama, ateşleme kaynağı kontrolü, izin sistemi",
+            "ppe":            "Antistatik iş elbisesi, alev geciktirici KKD",
+        },
+        "Aşındırıcı madde": {
+            "elimination":    "Aşındırıcı maddeyi formülasyondan çıkar",
+            "substitution":   "Daha az aşındırıcı alternatif kullan",
+            "engineering":    "Kapalı sistem, göz duşu, acil duş",
+            "administrative": "SDS eğitimi, kimyasal taşıma prosedürü",
+            "ppe":            "Yüz siperi, kimyasal dirençli eldiven ve apron",
+        },
+        "Toksik madde maruziyeti": {
+            "elimination":    "Toksik maddeyi kaldır",
+            "substitution":   "Daha az toksik alternatif kullan",
+            "engineering":    "Kapalı sistem, LEV, gaz dedektörü",
+            "administrative": "TWA/STEL izleme, sağlık gözetimi",
+            "ppe":            "SCBA veya uygun filtreli maske, koruyucu tulum",
+        },
+    },
+    "Ergonomik Tehlikeler": {
+        "Ağır yük taşıma": {
+            "elimination":    "Manuel taşıma ihtiyacını ortadan kaldır",
             "substitution":   "Elektrikli transpalet, forklift kullan",
             "engineering":    "Konveyör, kaldırma yardımcısı, ayarlanabilir tezgah",
             "administrative": "25 kg üzeri ekip kaldırma kuralı, rotasyon",
             "ppe":            "Bel destek kemeri (destekleyici), kaymaz eldiven",
         },
-        "9.2 Tek yönlü dinamik çalışma": {
+        "Tekrarlayan hareket": {
             "elimination":    "Tekrarlayan görevi otomasyonla kaldır",
             "substitution":   "Ergonomik alet tasarımı kullan",
-            "engineering":    "Güç aletleri, exoskeleton desteği",
+            "engineering":    "Exoskeleton desteği, güç aletleri",
             "administrative": "Mikro mola takvimi, görev rotasyonu",
-            "ppe":            "Kompresyon eldiveni, bilek / dirsek desteği",
+            "ppe":            "Kompresyon eldiveni, bilek desteği",
         },
-        "9.3 Statik çalışma": {
-            "elimination":    "Sabit duruşu gerektiren görevi kaldır",
+        "Zorlamalı / uygunsuz postür": {
+            "elimination":    "Zorlamalı postürü gerektiren görevi yeniden tasarla",
+            "substitution":   "Ayarlanabilir çalışma istasyonu kullan",
+            "engineering":    "Yükseklik ayarlı tezgah, kol desteği, eğimli yüzey",
+            "administrative": "REBA/RULA değerlendirmesi, periyodik duruş değişikliği",
+            "ppe":            "Bel ve diz desteği, ergonomik giysi",
+        },
+        "Uzun süreli statik duruş": {
+            "elimination":    "Sabit duruş gerektiren görevi kaldır",
             "substitution":   "Oturarak çalışma imkanı sağla",
-            "engineering":    "Yükseklik ayarlı çalışma tezgahı, ayak desteği",
-            "administrative": "Periyodik duruş değişikliği, germe egzersizi",
-            "ppe":            "Anti-yorgunluk mat, ergonomik bot",
+            "engineering":    "Anti-yorgunluk mat, ayak desteği, yükseklik ayarlı tezgah",
+            "administrative": "Periyodik hareket molası, germe egzersizi programı",
+            "ppe":            "Ergonomik bot, kompresyon çorabı",
         },
-        "9.4 Statik ve dinamik çalışmanın kombinasyonu": {
-            "elimination":    "Kombinasyon yükü oluşturan görevi yeniden tasarla",
-            "substitution":   "Yardımcı ekipmanla yükü azalt",
-            "engineering":    "Ayarlanabilir çalışma istasyonu, kaldırma yardımcısı",
-            "administrative": "Rotasyon, REBA/RULA değerlendirmesi",
-            "ppe":            "Bel ve bilek desteği, ergonomik giysi",
-        },
-    },
-    "10 — Psikolojik Faktörler": {
-        "10.1 Yetersiz görev tasarımı": {
-            "elimination":    "Stres yaratan görev yapısını kaldır",
-            "substitution":   "Görev çeşitliliği artır",
-            "engineering":    "İş akışı yazılımı ile yük dengeleme",
-            "administrative": "Görev analizi, çalışan katılımlı tasarım",
-            "ppe":            "—",
-        },
-        "10.2 Organizasyon yetersizliği": {
-            "elimination":    "Yetersiz organizasyon yapısını kaldır",
-            "substitution":   "Yalın yönetim modeli uygula",
-            "engineering":    "Dijital iş takip sistemi",
-            "administrative": "Yönetici eğitimi, açık iletişim kanalı",
-            "ppe":            "—",
-        },
-        "10.3 Yetersiz sosyal koşullar": {
-            "elimination":    "Taciz ve zorbalık kaynaklarını kaldır",
-            "substitution":   "Destekleyici çalışma ortamı oluştur",
-            "engineering":    "Anonim şikayet sistemi",
-            "administrative": "Davranış kuralları, EAP programı",
-            "ppe":            "—",
-        },
-        "10.4 Yetersiz çalışma yeri ve çalışma çevresi tasarımı": {
-            "elimination":    "Ergonomik olmayan çalışma alanını yeniden tasarla",
-            "substitution":   "Ergonomik mobilya ve ekipman kullan",
-            "engineering":    "Aydınlatma, ses, sıcaklık kontrolü",
-            "administrative": "Ergonomi değerlendirmesi, çalışan geri bildirimi",
-            "ppe":            "—",
+        "El-kol titreşimi": {
+            "elimination":    "El aletini otomasyonla kaldır",
+            "substitution":   "Düşük titreşimli alet kullan",
+            "engineering":    "Titreşim izolasyonlu tutamak",
+            "administrative": "Maruziyet süresi sınırı, rotasyon",
+            "ppe":            "Titreşim sönümleyici eldiven (EN ISO 10819)",
         },
     },
-    "11 — Diğer Tehlikeler": {
-        "11.1 İnsanların yol açtığı tehlikeler": {
-            "elimination":    "İnsan hatasına yol açan durumu ortadan kaldır",
-            "substitution":   "Otomasyonla insan müdahalesini azalt",
-            "engineering":    "Hata önleyici (poka-yoke) sistem",
-            "administrative": "Eğitim, prosedür, denetim",
-            "ppe":            "Duruma göre belirlenir",
+    "Biyolojik Tehlikeler": {
+        "Biyolojik ajan maruziyeti": {
+            "elimination":    "Biyolojik ajan kaynağını kaldır / sterilize et",
+            "substitution":   "Daha güvenli biyolojik ajan kullan",
+            "engineering":    "Biyogüvenlik kabini, negatif basınçlı oda",
+            "administrative": "Biyogüvenlik prosedürü, aşılama programı",
+            "ppe":            "Tulum, eldiven, N95/FFP3 maske, gözlük",
         },
-        "11.2 Hayvanların yol açtığı tehlikeler": {
-            "elimination":    "Hayvan temasını ortadan kaldır",
+        "Keskin cisim yaralanması": {
+            "elimination":    "Keskin cisim kullanımını azalt",
+            "substitution":   "Güvenli iğne / bistüri sistemi kullan",
+            "engineering":    "Keskin atık kutusu, otomatik kapanır kap",
+            "administrative": "Keskin alet güvenlik prosedürü, eğitim",
+            "ppe":            "Kesme dirençli eldiven (EN 388), gözlük",
+        },
+        "Haşere / hayvan teması": {
+            "elimination":    "Haşere / hayvan temasını ortadan kaldır",
             "substitution":   "Uzaktan izleme sistemi kullan",
-            "engineering":    "Bariyer, kafes, kapalı çalışma alanı",
-            "administrative": "Hayvan davranış eğitimi, acil prosedür",
+            "engineering":    "Bariyer, tuzak, kapalı çalışma alanı",
+            "administrative": "Haşere kontrol programı, acil prosedür",
             "ppe":            "Koruyucu eldiven, bot, gözlük",
         },
-        "11.3 Bitkilerin ve bitkisel ürünlerin yol açtığı tehlikeler": {
-            "elimination":    "Tehlikeli bitki / bitkisel ürünle teması kaldır",
-            "substitution":   "Daha güvenli alternatif kullan",
-            "engineering":    "Kapalı sistem, havalandırma",
-            "administrative": "Alerji tarama, SDS eğitimi",
-            "ppe":            "Eldiven, maske, gözlük",
+    },
+    "Mekanik Tehlikeler": {
+        "Hareketli makine parçaları": {
+            "elimination":    "Tehlikeli hareketi ortadan kaldır",
+            "substitution":   "Güvenli tasarımlı makineyle değiştir",
+            "engineering":    "Koruyucu kapak, muhafaza, fotosell bariyer",
+            "administrative": "LOTO prosedürü, makine güvenlik talimatı",
+            "ppe":            "Sıkışmaya karşı eldiven, saç/kıyafet düzeni",
+        },
+        "Kesici / delici alet": {
+            "elimination":    "Kesici alet kullanımını kaldır",
+            "substitution":   "Daha güvenli kesim yöntemi kullan",
+            "engineering":    "Alet koruyucusu, bıçak muhafazası",
+            "administrative": "Kesici alet güvenlik talimatı, eğitim",
+            "ppe":            "Kesme dirençli eldiven (EN 388), yüz siperi",
+        },
+        "Basınçlı sistem patlaması": {
+            "elimination":    "Basınçlı sistemi kaldır",
+            "substitution":   "Daha düşük basınçlı alternatif kullan",
+            "engineering":    "Emniyet valfi, basınç göstergesi, periyodik test",
+            "administrative": "Periyodik muayene takvimi, operatör eğitimi",
+            "ppe":            "Yüz siperi, basınca dayanıklı eldiven",
+        },
+        "Vinç / kaldırma ekipmanı arızası": {
+            "elimination":    "Kaldırma ihtiyacını ortadan kaldır",
+            "substitution":   "Daha güvenli kaldırma sistemi kullan",
+            "engineering":    "Yük kapasitesi kilidi, periyodik muayene sistemi",
+            "administrative": "Operatör yetkilendirme, kaldırma planı, barikat",
+            "ppe":            "Baret (EN 397), çelik burunlu bot, yüksek görünürlüklü yelek",
+        },
+    },
+    "Yangın / Patlama": {
+        "Yangın çıkma riski": {
+            "elimination":    "Ateşleme kaynağı ve yanıcı maddeyi birbirinden ayır",
+            "substitution":   "Yanmaz malzeme kullan",
+            "engineering":    "Sprinkler sistemi, yangın kapısı, duman dedektörü",
+            "administrative": "Acil tahliye planı, yangın tatbikatı, ateşleme izni",
+            "ppe":            "Alev geciktirici iş elbisesi (EN ISO 11612)",
+        },
+        "Patlama riski": {
+            "elimination":    "Patlayıcı atmosfer oluşumunu engelle",
+            "substitution":   "İnert gaz kullan",
+            "engineering":    "Ex-proof ekipman (ATEX), topraklama, havalandırma",
+            "administrative": "ATEX zonlama, ateşleme kaynağı kontrolü, izin sistemi",
+            "ppe":            "Antistatik iş elbisesi, ATEX onaylı KKD",
+        },
+        "Duman / oksijen azalması": {
+            "elimination":    "Duman / gaz kaynağını kaldır",
+            "substitution":   "Kapalı yakma sistemi kullan",
+            "engineering":    "CO/O2 dedektörü, mekanik havalandırma, acil egzoz",
+            "administrative": "Kapalı alan izin sistemi, gözetçi, tahliye planı",
+            "ppe":            "SCBA veya hava ikmal hattı, can kurtarma halatı",
+        },
+    },
+    "Psikososyal Tehlikeler": {
+        "Aşırı iş yükü / stres": {
+            "elimination":    "Stres yaratan görev yapısını kaldır",
+            "substitution":   "Görev çeşitliliği artır, iş yükü dengele",
+            "engineering":    "Dijital iş takip sistemi ile yük görünürlüğü",
+            "administrative": "Görev analizi, EAP programı, yönetici eğitimi",
+            "ppe":            "—",
+        },
+        "Şiddet / taciz riski": {
+            "elimination":    "Taciz ve zorbalık kaynaklarını kaldır",
+            "substitution":   "Destekleyici çalışma ortamı oluştur",
+            "engineering":    "Anonim şikayet sistemi, güvenlik kamerası",
+            "administrative": "Davranış kuralları, sıfır tolerans politikası",
+            "ppe":            "—",
+        },
+        "Yalnız çalışma tehlikesi": {
+            "elimination":    "Yalnız çalışma ihtiyacını kaldır",
+            "substitution":   "Uzaktan gözetim sistemi kullan",
+            "engineering":    "Panic button, otomatik check-in sistemi",
+            "administrative": "Yalnız çalışma prosedürü, periyodik check-in",
+            "ppe":            "Kişisel alarm cihazı",
         },
     },
 }
 
-# Kategori bazında genel önlem (spesifik tehlike yoksa fallback)
+# Kategori bazında genel önlem (fallback)
 GENERAL_CONTROLS = {
-    "1 — Mekanik Tehlikeler":                          {"engineering": "Fiziksel bariyer ve koruyucu kur", "ppe": "Baret, bot, eldiven"},
-    "2 — Elektrikle İlgili Tehlikeler":                {"engineering": "İzolasyon ve topraklama sağla", "ppe": "Yalıtımlı eldiven ve bot"},
-    "3 — Tehlikeli Maddeler":                          {"engineering": "Havalandırma sağla, kapalı sistem kullan", "ppe": "Maske, eldiven, gözlük"},
-    "4 — Biyolojik Tehlikeler":                        {"engineering": "Hijyen istasyonu kur", "ppe": "Eldiven, maske, tulum"},
-    "5 — Yangın ve Patlama Tehlikeleri":               {"engineering": "Yangın söndürücü ve alarm kur", "ppe": "Alev geciktirici KKD"},
-    "6 — Termik Tehlikeler":                           {"engineering": "Isı yalıtımı uygula", "ppe": "Isıya/soğuğa dirençli eldiven ve giysi"},
-    "7 — Özel Fiziksel Etkilerin Yol Açtığı Tehlikeler": {"engineering": "Fiziksel etken kaynağını koru veya izole et", "ppe": "Duruma uygun KKD seç"},
-    "8 — Çalışma Koşullarının Yol Açtığı Tehlikeler": {"engineering": "Ortam koşullarını iyileştir", "ppe": "Duruma uygun KKD seç"},
-    "9 — Fiziksel Baskılar":                           {"engineering": "Ergonomik çalışma istasyonu kur", "ppe": "Destek ekipmanı kullan"},
-    "10 — Psikolojik Faktörler":                       {"administrative": "Yük dengeleme ve destek programı uygula", "ppe": "—"},
-    "11 — Diğer Tehlikeler":                           {"administrative": "Sahaya özel risk değerlendirmesi yap", "ppe": "Duruma göre belirle"},
+    "Fiziksel Tehlikeler":    {"engineering": "Fiziksel bariyer ve koruyucu kur", "ppe": "Uygun KKD kullan (baret, bot, yelek)"},
+    "Kimyasal Tehlikeler":    {"engineering": "Havalandırma sağla, kapalı sistem kullan", "ppe": "Maske, eldiven, gözlük"},
+    "Ergonomik Tehlikeler":   {"engineering": "Ergonomik çalışma istasyonu kur", "ppe": "Destek ekipmanı kullan"},
+    "Biyolojik Tehlikeler":   {"engineering": "Hijyen istasyonu kur", "ppe": "Eldiven, maske, tulum"},
+    "Mekanik Tehlikeler":     {"engineering": "Makine muhafazası ve bariyer kur", "ppe": "Sıkışma/darbe KKD kullan"},
+    "Yangın / Patlama":       {"engineering": "Yangın söndürücü ve alarm kur", "ppe": "Alev geciktirici KKD"},
+    "Psikososyal Tehlikeler": {"administrative": "Yük dengeleme ve destek programı uygula", "ppe": "—"},
 }
 
 CONTROL_LABELS = {
@@ -457,26 +363,23 @@ CONTROL_LABELS = {
 def get_controls(category: str, description: str) -> dict:
     """
     Tehlike kategorisi ve açıklamasına göre kontrol önerileri döndür.
-    Kategori eşleştirmesi partial match ile yapılır —
-    AI "Fiziksel Baskılar" dese bile "9 — Fiziksel Baskılar" anahtarıyla eşleşir.
+    Kategori eşleştirmesi partial match ile yapılır.
     """
-    # ── 1. Kategori eşleştirme (partial match) ────────────────────────────────
     cat_lower = category.lower().strip()
-    matched_cat_key = None
 
-    # Önce tam eşleşme dene
+    # Tam eşleşme
+    matched_cat_key = None
     if category in CONTROL_HIERARCHY:
         matched_cat_key = category
     else:
-        # Partial match: sözlük anahtarının category içerip içermediğine bak
+        # Partial match
         for key in CONTROL_HIERARCHY:
-            key_core = key.split("—")[-1].strip().lower()  # "9 — Fiziksel Baskılar" → "fiziksel baskılar"
+            key_core = key.split("—")[-1].strip().lower()
             if key_core in cat_lower or cat_lower in key_core:
                 matched_cat_key = key
                 break
 
     if not matched_cat_key:
-        # GENERAL_CONTROLS için de partial match
         for key in GENERAL_CONTROLS:
             key_core = key.split("—")[-1].strip().lower()
             if key_core in cat_lower or cat_lower in key_core:
@@ -484,14 +387,12 @@ def get_controls(category: str, description: str) -> dict:
         return {"administrative": "Sahaya özel risk değerlendirmesi yapın", "ppe": "Uygun KKD belirleyin"}
 
     cat_controls = CONTROL_HIERARCHY[matched_cat_key]
-
-    # ── 2. Alt tehlike eşleştirme (keyword match) ─────────────────────────────
     desc_lower = description.lower()
+
     best_match = None
     best_score = 0
     for hazard_key, controls in cat_controls.items():
         keywords = hazard_key.lower().split()
-        # Sayı ve kısa kelimeleri atla, anlamlı kelimeleri eşleştir
         score = sum(1 for kw in keywords if len(kw) > 3 and kw in desc_lower)
         if score > best_score:
             best_score = score
@@ -500,7 +401,6 @@ def get_controls(category: str, description: str) -> dict:
     if best_match and best_score >= 1:
         return best_match
 
-    # Alt tehlike eşleşmedi → genel kategori önermesi
     return GENERAL_CONTROLS.get(matched_cat_key, {
         "administrative": "Sahaya özel risk değerlendirmesi yapın",
         "ppe":            "Uygun KKD belirleyin"
