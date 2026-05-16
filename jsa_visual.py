@@ -113,6 +113,37 @@ Eğer görüntü net değilse veya tehlike tespit edemiyorsan boş liste döndü
 
 # ── PDF Rapor Üretimi ─────────────────────────────────────────────────────────
 
+# Türkçe karakter desteği için Unicode font kaydet
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+import urllib.request, tempfile, os as _os
+
+def _register_fonts():
+    """DejaVuSans fontunu indir ve kaydet — Türkçe/UTF-8 tam destek."""
+    try:
+        # Zaten kayıtlıysa atla
+        pdfmetrics.getFont("DejaVu")
+        return "DejaVu", "DejaVu-Bold"
+    except Exception:
+        pass
+    try:
+        urls = {
+            "DejaVu":     "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf",
+            "DejaVu-Bold":"https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf",
+        }
+        tmp = tempfile.gettempdir()
+        for name, url in urls.items():
+            path = _os.path.join(tmp, f"{name}.ttf")
+            if not _os.path.exists(path):
+                urllib.request.urlretrieve(url, path)
+            pdfmetrics.registerFont(TTFont(name, path))
+        return "DejaVu", "DejaVu-Bold"
+    except Exception:
+        # İndirme başarısız → Helvetica fallback (karakterler bozuk ama çökmez)
+        return "Helvetica", "Helvetica-Bold"
+
+FONT_NORMAL, FONT_BOLD = _register_fonts()
+
 # Renk paleti
 DARK_BLUE  = colors.HexColor("#1B2A4A")
 MID_BLUE   = colors.HexColor("#2E5FAC")
@@ -137,31 +168,31 @@ def _styles():
     base = getSampleStyleSheet()
     custom = {
         "title": ParagraphStyle(
-            "title", fontName="Helvetica-Bold", fontSize=18,
+            "title", fontName=FONT_BOLD, fontSize=18,
             textColor=DARK_BLUE, alignment=TA_CENTER, spaceAfter=4
         ),
         "subtitle": ParagraphStyle(
-            "subtitle", fontName="Helvetica", fontSize=10,
+            "subtitle", fontName=FONT_NORMAL, fontSize=10,
             textColor=MID_BLUE, alignment=TA_CENTER, spaceAfter=2
         ),
         "section": ParagraphStyle(
-            "section", fontName="Helvetica-Bold", fontSize=12,
+            "section", fontName=FONT_BOLD, fontSize=12,
             textColor=DARK_BLUE, spaceBefore=12, spaceAfter=6
         ),
         "body": ParagraphStyle(
-            "body", fontName="Helvetica", fontSize=9,
+            "body", fontName=FONT_NORMAL, fontSize=9,
             textColor=TEXT_DARK, leading=13
         ),
         "cell": ParagraphStyle(
-            "cell", fontName="Helvetica", fontSize=8,
+            "cell", fontName=FONT_NORMAL, fontSize=8,
             textColor=TEXT_DARK, leading=11
         ),
         "cell_bold": ParagraphStyle(
-            "cell_bold", fontName="Helvetica-Bold", fontSize=8,
+            "cell_bold", fontName=FONT_BOLD, fontSize=8,
             textColor=TEXT_DARK, leading=11
         ),
         "small": ParagraphStyle(
-            "small", fontName="Helvetica", fontSize=7,
+            "small", fontName=FONT_NORMAL, fontSize=7,
             textColor=colors.HexColor("#666666")
         ),
     }
@@ -313,7 +344,7 @@ def generate_pdf(
                 Paragraph(str(risk["E"]), S["cell"]),
                 Paragraph(f"<b>{risk['R']}</b>", S["cell_bold"]),
                 Paragraph(f"<b>{level}</b>", ParagraphStyle(
-                    "lvl", fontName="Helvetica-Bold", fontSize=8,
+                    "lvl", fontName=FONT_BOLD, fontSize=8,
                     textColor=lvl_color
                 )),
                 Paragraph(risk["action"], S["small"]),
