@@ -50,15 +50,21 @@ def detect_hazards(client: OpenAI, image: Image.Image) -> dict:
     hazard_list_str = "\n".join(f"- {h}" for h in get_all_hazards_flat())
     b64_image = image_to_base64_str(image)
 
+    # Kategori adlarını tam olarak listele — AI bunlardan birini seçmeli
+    from jsa_core import HAZARD_CATEGORIES
+    category_names = "\n".join(f"- {cat}" for cat in HAZARD_CATEGORIES.keys())
+
     prompt = f"""
 Sen deneyimli bir İş Sağlığı ve Güvenliği uzmanısın.
 Bu iş sahası fotoğrafını analiz et ve tehlikeleri tespit et.
 
-Aşağıdaki tehlike listesinden uygun olanları seç. Listede olmayan tehlike görürsen ekleyebilirsin:
-
+Aşağıdaki tehlike listesinden uygun olanları seç:
 {hazard_list_str}
 
-SADECE aşağıdaki JSON formatında yanıt ver. Başka hiçbir metin, açıklama veya markdown bloğu ekleme:
+"category" alanı için SADECE aşağıdaki kategori adlarından birini kullan (birebir aynı):
+{category_names}
+
+SADECE aşağıdaki JSON formatında yanıt ver, başka hiçbir metin ekleme:
 
 {{
   "hazards": [
@@ -205,11 +211,11 @@ RISK_COLOR_MAP = {
 def _styles():
     custom = {
         "title": ParagraphStyle(
-            "title", fontName=FONT_BOLD, fontSize=18,
-            textColor=DARK_BLUE, alignment=TA_CENTER, spaceAfter=4
+            "title", fontName=FONT_BOLD, fontSize=24,
+            textColor=DARK_BLUE, alignment=TA_CENTER, spaceAfter=12
         ),
         "subtitle": ParagraphStyle(
-            "subtitle", fontName=FONT_NORMAL, fontSize=10,
+            "subtitle", fontName=FONT_NORMAL, fontSize=12,
             textColor=MID_BLUE, alignment=TA_CENTER, spaceAfter=2
         ),
         "section": ParagraphStyle(

@@ -133,9 +133,9 @@ R = P × F × E
 | R Skoru | Seviye | Aksiyon |
 |---|---|---|
 | > 400 | ⛔ KABUL EDİLEMEZ | Derhal durdur, çalışmayı başlatma |
-| 200–400 | 🔴 KRİTİK | 24 saat içinde acil aksiyon |
-| 70–200 | 🟠 ÖNEMLİ | 1 hafta içinde planlı aksiyon |
-| 20–70 | 🟡 ORTA | 1 ay içinde iyileştirme planla |
+| 200–400 | 🔴 KRİTİK | 1 hafta içinde acil aksiyon |
+| 70–200 | 🟠 ÖNEMLİ | 1 ay içinde planlı aksiyon |
+| 20–70 | 🟡 ORTA | Gözlemle, eğer aksiyon gerekiyorsa 3 ay içinde iyileştirme planla |
 | < 20 | 🟢 DÜŞÜK | Periyodik gözlem yeterli |
 
 ---

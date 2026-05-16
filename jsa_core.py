@@ -33,9 +33,9 @@ SEVERITY = {
 # Risk Skoru → Seviye eşikleri
 RISK_LEVELS = [
     (400, "KABUL EDİLEMEZ", "#8B0000", "⛔ Derhal durdur, çalışmayı başlatma"),
-    (200, "KRİTİK",         "#FF0000", "🔴 24 saat içinde acil aksiyon"),
-    (70,  "ÖNEMLİ",         "#FF8C00", "🟠 1 hafta içinde planlı aksiyon"),
-    (20,  "ORTA",           "#FFD700", "🟡 1 ay içinde iyileştirme planla"),
+    (200, "KRİTİK",         "#FF0000", "🔴 1 hafta içinde acil aksiyon"),
+    (70,  "ÖNEMLİ",         "#FF8C00", "🟠 1 ay içinde planlı aksiyon"),
+    (20,  "ORTA",           "#FFD700", "🟡 Gözlemle, eğer aksiyon gerekiyorsa 3 ay içinde iyileştirme planla"),
     (0,   "DÜŞÜK",          "#228B22", "🟢 Periyodik gözlem yeterli"),
 ]
 
@@ -457,15 +457,41 @@ CONTROL_LABELS = {
 def get_controls(category: str, description: str) -> dict:
     """
     Tehlike kategorisi ve açıklamasına göre kontrol önerileri döndür.
-    Önce kategoriye gir, sonra açıklamada anahtar kelime eşleştir.
+    Kategori eşleştirmesi partial match ile yapılır —
+    AI "Fiziksel Baskılar" dese bile "9 — Fiziksel Baskılar" anahtarıyla eşleşir.
     """
-    cat_controls = CONTROL_HIERARCHY.get(category, {})
-    desc_lower = description.lower()
+    # ── 1. Kategori eşleştirme (partial match) ────────────────────────────────
+    cat_lower = category.lower().strip()
+    matched_cat_key = None
 
+    # Önce tam eşleşme dene
+    if category in CONTROL_HIERARCHY:
+        matched_cat_key = category
+    else:
+        # Partial match: sözlük anahtarının category içerip içermediğine bak
+        for key in CONTROL_HIERARCHY:
+            key_core = key.split("—")[-1].strip().lower()  # "9 — Fiziksel Baskılar" → "fiziksel baskılar"
+            if key_core in cat_lower or cat_lower in key_core:
+                matched_cat_key = key
+                break
+
+    if not matched_cat_key:
+        # GENERAL_CONTROLS için de partial match
+        for key in GENERAL_CONTROLS:
+            key_core = key.split("—")[-1].strip().lower()
+            if key_core in cat_lower or cat_lower in key_core:
+                return GENERAL_CONTROLS[key]
+        return {"administrative": "Sahaya özel risk değerlendirmesi yapın", "ppe": "Uygun KKD belirleyin"}
+
+    cat_controls = CONTROL_HIERARCHY[matched_cat_key]
+
+    # ── 2. Alt tehlike eşleştirme (keyword match) ─────────────────────────────
+    desc_lower = description.lower()
     best_match = None
     best_score = 0
     for hazard_key, controls in cat_controls.items():
-        keywords = hazard_key.lower().split()[:5]
+        keywords = hazard_key.lower().split()
+        # Sayı ve kısa kelimeleri atla, anlamlı kelimeleri eşleştir
         score = sum(1 for kw in keywords if len(kw) > 3 and kw in desc_lower)
         if score > best_score:
             best_score = score
@@ -474,7 +500,8 @@ def get_controls(category: str, description: str) -> dict:
     if best_match and best_score >= 1:
         return best_match
 
-    return GENERAL_CONTROLS.get(category, {
+    # Alt tehlike eşleşmedi → genel kategori önermesi
+    return GENERAL_CONTROLS.get(matched_cat_key, {
         "administrative": "Sahaya özel risk değerlendirmesi yapın",
         "ppe":            "Uygun KKD belirleyin"
     })
