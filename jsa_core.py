@@ -34,9 +34,9 @@ SEVERITY = {
 # Risk Skoru → Seviye eşikleri (Fine-Kinney standart)
 RISK_LEVELS = [
     (400, "KABUL EDİLEMEZ",  "#8B0000", "⛔ Derhal durdur, çalışmayı başlatma"),
-    (200, "KRİTİK",          "#FF0000", "🔴 24 saat içinde acil aksiyon"),
-    (70,  "ÖNEMLİ",          "#FF8C00", "🟠 1 hafta içinde planlı aksiyon"),
-    (20,  "ORTA",            "#FFD700", "🟡 1 ay içinde iyileştirme planla"),
+    (200, "KRİTİK",          "#FF0000", "🔴 1 hafta içinde acil aksiyon"),
+    (70,  "ÖNEMLİ",          "#FF8C00", "🟠 3 ay içinde planlı aksiyon"),
+    (20,  "ORTA",            "#FFD700", "🟡 Periyodik gözlem yeterli, varsa 3 ay içinde iyileştirme planla"),
     (0,   "DÜŞÜK",           "#228B22", "🟢 Periyodik gözlem yeterli"),
 ]
 

@@ -106,15 +106,15 @@ if uploaded_file:
         """)
 
         if not api_key:
-            st.warning("⚠️ Sol panelden Gemini API Key girin.")
+            st.warning("⚠️ Sol panelden OpenAI API Key girin.")
         else:
             if st.button("🔍 AI ile Tehlike Tespit Et", use_container_width=True):
-                with st.spinner("Gemini analiz ediyor..."):
+                with st.spinner("🤖 AI fotoğrafı analiz ediyor, tehlikeler tespit ediliyor..."):
                     try:
                         model = init_gemini(api_key)
                         result = detect_hazards_gemini(model, image)
                         st.session_state.gemini_result = result
-                        st.session_state.hazard_rows = []  # önceki skoru sıfırla
+                        st.session_state.hazard_rows = []
                         st.success(f"✅ {len(result.get('hazards', []))} tehlike tespit edildi.")
                         st.rerun()
                     except Exception as e:

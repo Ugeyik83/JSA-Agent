@@ -197,7 +197,6 @@ RISK_COLOR_MAP = {
 
 
 def _styles():
-    base = getSampleStyleSheet()
     custom = {
         "title": ParagraphStyle(
             "title", fontName=FONT_BOLD, fontSize=18,
@@ -219,8 +218,14 @@ def _styles():
             "cell", fontName=FONT_NORMAL, fontSize=8,
             textColor=TEXT_DARK, leading=11
         ),
+        # Koyu zemin için beyaz — tablo header'larında kullanılır
         "cell_bold": ParagraphStyle(
             "cell_bold", fontName=FONT_BOLD, fontSize=8,
+            textColor=colors.white, leading=11
+        ),
+        # Koyu zemin değil, açık zemin için koyu bold
+        "cell_bold_dark": ParagraphStyle(
+            "cell_bold_dark", fontName=FONT_BOLD, fontSize=8,
             textColor=TEXT_DARK, leading=11
         ),
         "small": ParagraphStyle(
@@ -257,7 +262,6 @@ def generate_pdf(
     story.append(Paragraph("İŞ GÜVENLİĞİ ANALİZİ RAPORU", S["title"]))
     story.append(Paragraph("Fine-Kinney Risk Değerlendirme Yöntemi", S["subtitle"]))
     story.append(HRFlowable(width="100%", thickness=2, color=DARK_BLUE, spaceAfter=10))
-
     # ── META BİLGİLER TABLOSU ─────────────────────────────────────────────────
     meta_data = [
         ["Firma / Tesis", meta.get("firma", "—"),
@@ -267,7 +271,7 @@ def generate_pdf(
         ["İş Tanımı",     meta.get("is_tanimi", "—"), "", ""],
     ]
     meta_table = Table(
-        [[Paragraph(str(c), S["cell_bold"] if i % 2 == 0 else S["cell"])
+        [[Paragraph(str(c), S["cell_bold_dark"] if i % 2 == 0 else S["cell"])
           for i, c in enumerate(row)] for row in meta_data],
         colWidths=[3.2*cm, 6.5*cm, 3.2*cm, 5.0*cm],
     )
@@ -415,7 +419,7 @@ def generate_pdf(
              "Ort. Risk Skoru",str(summary.get("ort_skor", 0))],
         ]
         sum_table = Table(
-            [[Paragraph(str(c), S["cell_bold"] if i % 2 == 0 else S["cell"])
+            [[Paragraph(str(c), S["cell_bold_dark"] if i % 2 == 0 else S["cell"])
               for i, c in enumerate(row)] for row in sum_data],
             colWidths=[4.5*cm, 3.0*cm, 4.5*cm, 3.0*cm],
         )
@@ -477,32 +481,44 @@ def generate_pdf(
     # ── FINE-KINNEY REFERANS TABLOSU ──────────────────────────────────────────
     story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#CCCCCC"), spaceBefore=8))
     story.append(Paragraph("Fine-Kinney Risk Skala Referansı", S["subtitle"]))
-    ref_data = [
-        [Paragraph("<b>R Skoru</b>", S["cell_bold"]),
-         Paragraph("<b>Seviye</b>", S["cell_bold"]),
-         Paragraph("<b>Aksiyon</b>", S["cell_bold"])],
-        ["> 400", "KABUL EDİLEMEZ", "Derhal durdur"],
-        ["200–400", "KRİTİK", "24 saat içinde aksiyon"],
-        ["70–200", "ÖNEMLİ", "1 hafta içinde aksiyon"],
-        ["20–70", "ORTA", "1 ay içinde planlı aksiyon"],
-        ["< 20", "DÜŞÜK", "Periyodik gözlem"],
+
+    ref_levels = [
+        ("> 400",   "KABUL EDİLEMEZ", "Derhal durdur",               colors.HexColor("#8B0000")),
+        ("200–400", "KRİTİK",         "24 saat içinde aksiyon",       colors.HexColor("#C0392B")),
+        ("70–200",  "ÖNEMLİ",         "1 hafta içinde aksiyon",       colors.HexColor("#E67E22")),
+        ("20–70",   "ORTA",           "1 ay içinde planlı aksiyon",   colors.HexColor("#F1C40F")),
+        ("< 20",    "DÜŞÜK",          "Periyodik gözlem",             colors.HexColor("#1E8449")),
     ]
-    ref_table = Table(ref_data, colWidths=[3.0*cm, 4.0*cm, 10.0*cm])
-    ref_colors_list = [
-        colors.HexColor("#8B0000"), colors.HexColor("#C0392B"),
-        colors.HexColor("#E67E22"), colors.HexColor("#F1C40F"),
-        colors.HexColor("#1E8449"),
+
+    ref_header = [
+        Paragraph("R Skoru", S["cell_bold"]),
+        Paragraph("Seviye",  S["cell_bold"]),
+        Paragraph("Aksiyon", S["cell_bold"]),
     ]
+    ref_rows = [ref_header]
     ref_style = [
         ("BACKGROUND", (0,0), (-1,0), DARK_BLUE),
-        ("TEXTCOLOR", (0,0), (-1,0), colors.white),
         ("GRID", (0,0), (-1,-1), 0.4, colors.HexColor("#CCCCCC")),
-        ("PADDING", (0,0), (-1,-1), 4),
-        ("FONTSIZE", (0,0), (-1,-1), 8),
+        ("PADDING", (0,0), (-1,-1), 5),
+        ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
     ]
-    for i, c in enumerate(ref_colors_list, 1):
-        ref_style.append(("BACKGROUND", (1,i), (1,i), c))
-        ref_style.append(("TEXTCOLOR", (1,i), (1,i), colors.white))
+    for i, (skor, seviye, aksiyon, bg) in enumerate(ref_levels, 1):
+        # Sarı için koyu metin, diğerleri beyaz
+        txt_color = TEXT_DARK if bg == colors.HexColor("#F1C40F") else colors.white
+        seviye_style = ParagraphStyle(
+            f"ref_{i}", fontName=FONT_BOLD, fontSize=8,
+            textColor=txt_color, leading=11
+        )
+        ref_rows.append([
+            Paragraph(skor,    S["cell"]),
+            Paragraph(seviye,  seviye_style),
+            Paragraph(aksiyon, S["cell"]),
+        ])
+        ref_style.append(("BACKGROUND", (1,i), (1,i), bg))
+        ref_style.append(("ROWBACKGROUNDS", (0,i), (0,i), [GRAY]))
+        ref_style.append(("ROWBACKGROUNDS", (2,i), (2,i), [GRAY if i%2==0 else colors.white]))
+
+    ref_table = Table(ref_rows, colWidths=[3.0*cm, 4.0*cm, 10.0*cm])
     ref_table.setStyle(TableStyle(ref_style))
     story.append(ref_table)
 
